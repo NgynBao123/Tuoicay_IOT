@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d12">
+<title>Tưới cây</title>
+<style>
+  :root {
+    --bg:#0b0d12; --card:#161a22; --card2:#1c212b; --hover:#262d3a; --track:#2a303c;
+    --text:#eef1f6; --muted:#8b94a3; --dat:#34d399; --nhiet:#fb7185; --kk:#38bdf8;
+    --bom:#a78bfa; --warn:#fbbf24; --err:#f43f5e;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; background:var(--bg); color:var(--text);
+    font:15px/1.4 -apple-system, "Segoe UI", Roboto, system-ui, sans-serif; }
+  body { padding: max(14px, env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 4px 0 0; }
+  .sub { color: var(--muted); font-size: 12px; }
+  .top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .gear { background:var(--card2); border:0; color:var(--muted); width:38px; height:38px; border-radius:12px; font-size:18px; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin:12px 0; }
+  .chip { display:flex; align-items:center; gap:6px; background:var(--card2); color:var(--muted);
+    border-radius:999px; padding:5px 11px; font-size:12px; font-weight:600; }
+  .chip i { width:8px; height:8px; border-radius:50%; background:var(--muted); display:block; }
+  .chip.ok { color:var(--dat); } .chip.ok i { background:var(--dat); }
+  .chip.warn { color:var(--warn); } .chip.warn i { background:var(--warn); }
+  .chip.err { color:var(--nhiet); } .chip.err i { background:var(--nhiet); }
+  .chip.info { color:var(--kk); } .chip.info i { background:var(--kk); }
+  .banner { border-radius:20px; padding:18px 18px 16px; background:linear-gradient(135deg,#19b99b,#0b7774); position:relative; overflow:hidden; }
+  .banner.err { background:linear-gradient(135deg,#f43f5e,#7f1d3a); }
+  .banner.off { background:linear-gradient(135deg,#475569,#1e293b); }
+  .banner.busy { background:linear-gradient(135deg,#7c3aed,#3b1d8f); }
+  .banner h2 { margin:0; font-size:21px; } .banner p { margin:6px 0 0; font-size:13px; opacity:.92; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px; }
+  .m { background:var(--card); border-radius:16px; padding:12px 12px 12px; min-width:0; }
+  .m .l { color:var(--muted); font-size:11.5px; }
+  .m .v { font-size:25px; font-weight:700; margin:2px 0 8px; white-space:nowrap; }
+  .bar { height:6px; border-radius:3px; background:var(--track); position:relative; }
+  .bar b { display:block; height:100%; border-radius:3px; width:0; transition:width .4s; }
+  .bar u { position:absolute; top:-4px; width:2px; height:14px; background:var(--warn); display:none; }
+  .card { background:var(--card); border-radius:18px; padding:14px; margin-top:12px; }
+  .card h3 { margin:0 0 10px; font-size:14px; }
+  .row { display:flex; justify-content:space-between; gap:8px; }
+  .seg { display:flex; gap:2px; } .seg button { background:none; border:0; color:var(--muted); font-weight:700; font-size:12px; padding:5px 9px; border-radius:8px; }
+  .seg button.on { background:var(--hover); color:var(--text); }
+  canvas { width:100%; height:130px; display:block; }
+  .lg { display:flex; gap:12px; font-size:11px; color:var(--muted); margin:2px 0 6px; flex-wrap:wrap; }
+  .lg span::before { content:""; display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; background:var(--c); }
+  .ctl { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .btn { border:0; border-radius:14px; padding:15px 10px; font-size:15px; font-weight:700; color:#06231a; background:var(--dat); }
+  .btn.stop { background:var(--err); color:#fff; }
+  .btn.auto { background:var(--hover); color:var(--text); grid-column:1 / -1; }
+  .btn.unlock { background:var(--warn); color:#3a2600; grid-column:1 / -1; display:none; }
+  .btn.unlock.show { display:block; }
+  .btn:disabled { opacity:.35; }
+  .note { color:var(--muted); font-size:12px; margin-top:10px; }
+  .ev { display:flex; align-items:center; gap:10px; background:var(--card2); border-radius:12px; padding:9px 12px; margin-top:7px; font-size:13px; }
+  .ev i { width:8px; height:8px; border-radius:50%; flex:none; } .ev time { margin-left:auto; color:var(--muted); font-size:12px; flex:none; }
+  .ev span { min-width:0; overflow-wrap:anywhere; }
+  .toast { position:fixed; left:14px; right:14px; bottom:calc(16px + env(safe-area-inset-bottom)); max-width:532px; margin:0 auto;
+    background:var(--hover); border-radius:14px; padding:13px 16px; font-size:14px; transform:translateY(160%); transition:transform .25s; z-index:9; }
+  .toast.show { transform:none; } .toast.ok { border-left:5px solid var(--dat); } .toast.bad { border-left:5px solid var(--err); }
+  dialog { background:var(--card); color:var(--text); border:0; border-radius:20px; padding:20px; width:min(92vw,440px); }
+  dialog::backdrop { background:rgba(0,0,0,.6); }
+  label { display:block; color:var(--muted); font-size:12px; margin:10px 0 4px; }
+  input { width:100%; background:#0f1218; color:var(--text); border:1px solid #252b36; border-radius:10px; padding:11px; font-size:15px; }
+  .dlg-btns { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+  .dlg-btns .btn { padding:11px 18px; }
+  .btn.ghost { background:var(--hover); color:var(--text); }
+  [hidden] { display:none !important; }
+  .wnow { display:flex; align-items:center; gap:14px; }
+  .wt { font-size:34px; font-weight:700; white-space:nowrap; }
+  .wico { font-size:34px; line-height:1; }
+  .wwarn { margin-top:10px; border-radius:12px; padding:10px 12px; background:#3a2f12; color:var(--warn); font-size:13px; font-weight:600; }
+  .wwarn.cu { background:var(--card2); color:var(--muted); font-weight:500; }
+  .hours { display:flex; gap:6px; overflow-x:auto; margin-top:12px; padding-bottom:4px; }
+  .hh { flex:none; min-width:54px; background:var(--card2); border-radius:12px; padding:7px 6px; text-align:center; font-size:12px; color:var(--muted); }
+  .hh b { display:block; color:var(--text); font-size:14px; margin:1px 0; }
+  .hh .p { color:var(--kk); font-size:11px; }
+  .dd { display:flex; justify-content:space-between; align-items:center; gap:8px; background:var(--card2); border-radius:12px; padding:9px 12px; margin-top:6px; font-size:13px; }
+  .dd span:last-child { color:var(--muted); text-align:right; }
+  .opts { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .pill { border:0; border-radius:999px; padding:9px 14px; font-size:13px; font-weight:700; background:var(--hover); color:var(--text); }
+  .pill.huy { background:#3b1820; color:var(--nhiet); }
+  .pill:disabled { opacity:.35; }
+  .stat { font-size:13px; color:var(--muted); margin-top:4px; }
+  .stat b { color:var(--text); }
+  .btn.mark { background:var(--card2); color:var(--text); width:100%; margin-top:12px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div><h1>Tưới cây</h1><div class="sub" id="gio">--</div></div>
+  <button class="gear" id="btnCai" aria-label="Cài đặt kết nối">⚙</button>
+</div>
+
+<div class="chips">
+  <div class="chip" id="cCloud"><i></i><span>Máy chủ</span></div>
+  <div class="chip" id="cPc"><i></i><span>PC</span></div>
+  <div class="chip" id="cArd"><i></i><span>Arduino</span></div>
+</div>
+<div class="chips" id="cheDo" style="display:none;margin-top:-4px"></div>
+
+<div class="banner off" id="banner"><h2 id="bTieu">Chưa kết nối</h2><p id="bMota">Bấm ⚙ để nhập thông tin máy chủ MQTT.</p></div>
+
+<div class="grid">
+  <div class="m"><div class="l">Độ ẩm đất</div><div class="v" id="vDat">--</div><div class="bar"><b id="bDat" style="background:var(--dat)"></b><u id="uNguong"></u></div></div>
+  <div class="m"><div class="l">Nhiệt độ</div><div class="v" id="vNhiet">--</div><div class="bar"><b id="bNhiet" style="background:var(--nhiet)"></b></div></div>
+  <div class="m"><div class="l">Độ ẩm KK</div><div class="v" id="vKk">--</div><div class="bar"><b id="bKk" style="background:var(--kk)"></b></div></div>
+</div>
+
+<div class="card" id="cardTt">
+  <div class="row"><h3>Thời tiết</h3><span class="sub" id="wCapNhat"></span></div>
+  <div class="wnow"><span class="wico" id="wIco">·</span><div class="wt" id="wNhiet">--</div>
+    <div><div id="wMoTa">Đang chờ dữ liệu...</div><div class="sub" id="wPhu"></div></div></div>
+  <div class="wwarn" id="wCanhBao" hidden></div>
+  <div class="hours" id="wGio"></div>
+  <div id="wNgay"></div>
+</div>
+
+<div class="card">
+  <div class="row"><h3>Bơm nước: <span id="bomTxt" style="color:var(--muted)">--</span></h3></div>
+  <div class="ctl">
+    <button class="btn" id="btnBom" disabled>💧 Tưới ngay</button>
+    <button class="btn stop" id="btnStop" disabled>■ Dừng bơm</button>
+    <button class="btn auto" id="btnAuto" disabled>Bật lại tự động</button>
+    <button class="btn unlock" id="btnMoKhoa" disabled>🔓 Mở khóa bơm</button>
+  </div>
+  <div class="note" id="ctlNote">Tưới ngay = một phiên tưới, tối đa 30 mL, tự dừng khi đất đủ ẩm. Dừng bơm cũng tạm dừng tự động tưới cho đến khi bấm “Bật lại tự động”. Nếu bơm bị khóa (2 phiên tưới liên tiếp mà đất không ẩm lên), nút “Mở khóa bơm” sẽ hiện ra để bạn tự quyết định, không cần reset Arduino.</div>
+</div>
+
+<div class="card">
+  <h3>Hoãn tưới và vắng nhà</h3>
+  <div class="stat" id="stHoan">Hoãn tưới: --</div>
+  <div class="opts" id="optHoan">
+    <button class="pill" data-p="30">30 phút</button><button class="pill" data-p="60">1 giờ</button>
+    <button class="pill" data-p="180">3 giờ</button><button class="pill" data-p="360">6 giờ</button>
+    <button class="pill huy" data-p="0">Hủy hoãn</button>
+  </div>
+  <div class="stat" id="stVang" style="margin-top:14px">Vắng nhà: --</div>
+  <div class="opts" id="optVang">
+    <button class="pill" data-g="24">1 ngày</button><button class="pill" data-g="72">3 ngày</button>
+    <button class="pill" data-g="168">7 ngày</button><button class="pill huy" data-g="0">Đã về</button>
+  </div>
+  <button class="btn mark" id="btnMark" disabled>📍 Đánh dấu sự kiện</button>
+  <div class="note">Hoãn chỉ chặn các phiên tưới tự động mới: đất dưới 5% vẫn được tưới, bơm đang chạy không bị dừng, nút “Tưới ngay” vẫn dùng được. Hủy hoãn hoặc “Bật lại tự động” sẽ xóa hoãn. Đánh dấu ghi lại thời điểm bạn bón phân, đổi chậu... vào danh sách sự kiện.</div>
+</div>
+
+<div class="card">
+  <div class="row"><h3>Biểu đồ</h3>
+    <div class="seg" id="seg"><button data-m="10" class="on">10 phút</button><button data-m="60">1 giờ</button></div></div>
+  <div class="lg"><span style="--c:var(--dat)">Đất %</span><span style="--c:var(--nhiet)">Nhiệt độ °C</span><span style="--c:var(--kk)">KK %</span><span style="--c:var(--bom)">Bơm chạy</span></div>
+  <canvas id="c1"></canvas>
+  <canvas id="c2"></canvas>
+</div>
+
+<div class="card"><h3>Sự kiện gần đây</h3><div id="evs"><div class="sub">Chưa có sự kiện nào</div></div></div>
+
+<div class="toast" id="toast"></div>
+
+<dialog id="dlg">
+  <h3 style="margin:0 0 4px">Kết nối máy chủ MQTT</h3>
+  <div class="sub">Dùng đúng thông tin đã nhập trong app PC (nút điện thoại ở thanh bên). Hoặc mở liên kết do app PC sao chép.</div>
+  <label for="iHost">Máy chủ</label><input id="iHost" autocapitalize="off" autocorrect="off" placeholder="broker.hivemq.com">
+  <label for="iPort">Cổng WebSocket</label><input id="iPort" inputmode="numeric" placeholder="8884">
+  <label for="iPath">Đường dẫn</label><input id="iPath" autocapitalize="off" placeholder="/mqtt">
+  <label for="iUser">Tài khoản (nếu có)</label><input id="iUser" autocapitalize="off" autocorrect="off">
+  <label for="iPass">Mật khẩu (nếu có)</label><input id="iPass" type="password" autocomplete="off">
+  <label for="iTopic">Chủ đề</label><input id="iTopic" autocapitalize="off" autocorrect="off" placeholder="sd-...">
+  <div class="dlg-btns"><button class="btn ghost" id="dHuy">Hủy</button><button class="btn" id="dLuu">Lưu và kết nối</button></div>
+</dialog>
+
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script>if (typeof mqtt === "undefined") document.write('<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"><\/script>');</script>
+<script>
+"use strict";
+/* ---------- trạng thái ---------- */
+const $ = (id) => document.getElementById(id);
+const KHOA = "tuoi_cay_cfg_v1";
+const MAC_DINH = { host: "broker.hivemq.com", port: "8884", path: "/mqtt", user: "", pass: "", topic: "" };
+let cfg = null, client = null, daKetNoi = false, pcOnline = null;
+let tt = null;               // trạng thái mới nhất (retained)
+let tw = null;               // thời tiết mới nhất (retained, chủ đề /thoi_tiet)
+let ttNhan = 0;              // giờ điện thoại nhận được trạng thái
+let lichSu = [];             // [[ts, dat, nhiet, kk, bom], ...]
+let cuaSo = 10;              // phút
+let cho = {};                // lệnh đang chờ phản hồi: id -> {lenh, t}
+let khoaBom = 0;             // không cho bấm BOM liên tục
+
+function docCfg() {
+  let c = {};
+  try { c = JSON.parse(localStorage.getItem(KHOA) || "{}"); } catch (e) {}
+  return Object.assign({}, MAC_DINH, c);
+}
+function ghiCfg(c) { try { localStorage.setItem(KHOA, JSON.stringify(c)); } catch (e) {} }
+
+// Liên kết do app PC tạo: dien_thoai.html#h=host&t=topic&u=...&p=...
+function docHash() {
+  if (!location.hash || location.hash.length < 2) return null;
+  const q = new URLSearchParams(location.hash.slice(1));
+  if (!q.get("t")) return null;
+  const c = docCfg();
+  if (q.get("h")) c.host = q.get("h");
+  c.topic = q.get("t");
+  c.user = q.get("u") || ""; c.pass = q.get("p") || "";
+  history.replaceState(null, "", location.pathname + location.search);  // xóa mật khẩu khỏi thanh địa chỉ
+  return c;
+}
+
+/* ---------- tiện ích ---------- */
+function toast(noi, loai) {
+  const t = $("toast"); t.textContent = noi; t.className = "toast show " + (loai || "");
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.className = "toast " + (loai || ""), 4500);
+}
+function hhmmss(ts) { const d = new Date(ts * 1000); return d.toLocaleTimeString("vi-VN", { hour12: false }); }
+function thuNgay() {
+  const d = new Date(), T = ["Chủ nhật","Thứ hai","Thứ ba","Thứ tư","Thứ năm","Thứ sáu","Thứ bảy"];
+  $("gio").textContent = T[d.getDay()] + ", " + d.toLocaleDateString("vi-VN") + " · " + d.toLocaleTimeString("vi-VN", { hour12: false });
+}
+function chip(id, loai, chu) { const e = $(id); e.className = "chip " + loai; e.lastChild.textContent = chu; }
+const MAU = { loi: "#fb7185", canh_bao: "#fbbf24", ok: "#34d399", bom: "#a78bfa", tt: "#38bdf8" };
+
+/* ---------- kết nối MQTT ---------- */
+function ketNoi() {
+  if (client) { try { client.end(true); } catch (e) {} client = null; }
+  daKetNoi = false; pcOnline = null; tt = null; tw = null;
+  if (!cfg || !cfg.topic || !cfg.host) { capNhat(); return; }
+  if (typeof mqtt === "undefined") { toast("Không tải được thư viện MQTT. Kiểm tra mạng rồi tải lại trang.", "bad"); return; }
+  const url = "wss://" + cfg.host + ":" + cfg.port + (cfg.path.startsWith("/") ? cfg.path : "/" + cfg.path);
+  const opt = { clientId: "dt-" + Math.random().toString(16).slice(2, 10), clean: true, reconnectPeriod: 3000, connectTimeout: 10000, keepalive: 30 };
+  if (cfg.user) { opt.username = cfg.user; opt.password = cfg.pass; }
+  chip("cCloud", "warn", "Đang kết nối...");
+  client = mqtt.connect(url, opt);
+  client.on("connect", () => {
+    daKetNoi = true;
+    client.subscribe(cfg.topic + "/#", { qos: 1 });
+    capNhat();
+  });
+  client.on("close", () => { daKetNoi = false; pcOnline = null; capNhat(); });
+  client.on("error", () => { daKetNoi = false; capNhat(); });
+  client.on("message", (topic, buf, goi) => {
+    const ten = topic.slice(cfg.topic.length + 1);
+    const nd = buf.toString();
+    try {
+      if (ten === "online") { pcOnline = nd === "1"; }
+      else if (ten === "trang_thai") { tt = JSON.parse(nd); ttNhan = Date.now(); themDiem(tt); }
+      else if (ten === "thoi_tiet") { tw = JSON.parse(nd); }
+      else if (ten === "lich_su") { hopNhatLichSu(JSON.parse(nd)); }
+      else if (ten === "su_kien") { veSuKien(JSON.parse(nd)); }
+      else if (ten === "phan_hoi" && !goi.retain) { phanHoi(JSON.parse(nd)); }
+    } catch (e) { /* bỏ qua tin hỏng */ }
+    capNhat();
+  });
+}
+
+function themDiem(d) {
+  if (d.dat == null || d.nhiet == null) return;
+  const p = [d.ts, d.dat, d.nhiet, d.kk, d.bom ? 1 : 0];
+  const cuoi = lichSu[lichSu.length - 1];
+  if (cuoi && p[0] <= cuoi[0]) return;
+  lichSu.push(p);
+  if (lichSu.length > 2500) lichSu.splice(0, lichSu.length - 2500);
+}
+function hopNhatLichSu(ds) {
+  if (!Array.isArray(ds)) return;
+  const map = new Map(lichSu.map((p) => [p[0], p]));
+  for (const p of ds) if (Array.isArray(p) && p.length === 5) map.set(p[0], p);
+  lichSu = [...map.values()].sort((a, b) => a[0] - b[0]);
+}
+
+/* ---------- gửi lệnh ---------- */
+const LENH_CHI_PC = ["VANGNHA", "DANHDAU"];   // PC tự xử lý, không cần Arduino
+function guiLenh(lenh, thamSo) {
+  if (!client || !daKetNoi) { toast("Chưa kết nối máy chủ", "bad"); return; }
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  cho[id] = { lenh, t: Date.now() };
+  // retain=false: lệnh không bao giờ nằm lại trên máy chủ để bị thực hiện muộn
+  client.publish(cfg.topic + "/lenh", JSON.stringify(Object.assign({ id, lenh, ts: Date.now() }, thamSo || {})), { qos: 1, retain: false });
+  toast("Đã gửi lệnh " + lenh + ", đang chờ " + (LENH_CHI_PC.includes(lenh) ? "PC" : "Arduino") + " trả lời...");
+  if (navigator.vibrate) navigator.vibrate(30);
+  setTimeout(() => { if (cho[id]) { delete cho[id]; toast("Không nhận được phản hồi. PC có đang chạy app và ghi dữ liệu không?", "bad"); } }, 12000);
+}
+function phanHoi(d) {
+  if (!cho[d.id]) return;
+  delete cho[d.id];
+  const dau = d.ok ? (d.pc ? "" : "Arduino đã nhận lệnh ") : "Bị từ chối: ";
+  toast(dau + (d.tin || d.lenh), d.ok ? "ok" : "bad");
+}
+
+/* ---------- giao diện ---------- */
+function veSuKien(ds) {
+  const e = $("evs"); e.textContent = "";
+  if (!Array.isArray(ds) || !ds.length) { e.innerHTML = '<div class="sub">Chưa có sự kiện nào</div>'; return; }
+  for (const [ts, nd, loai] of ds.slice().reverse().slice(0, 12)) {
+    const r = document.createElement("div"); r.className = "ev";
+    const i = document.createElement("i"); i.style.background = MAU[loai] || "#8b94a3";
+    const s = document.createElement("span"); s.textContent = String(nd);
+    const t = document.createElement("time"); t.textContent = hhmmss(ts);
+    r.append(i, s, t); e.append(r);
+  }
+}
+
+/* ---------- thời tiết ---------- */
+const two = (n) => String(n).padStart(2, "0");
+const dpt = (ts, utc) => new Date((ts + (utc || 0)) * 1000);        // đọc bằng getUTC*: giờ địa phương của nơi đặt chậu
+function bieuTuong(ma) {
+  if (ma == null) return "·";
+  if (ma === 0) return "☀️"; if (ma === 1) return "🌤️"; if (ma === 2) return "⛅"; if (ma === 3) return "☁️";
+  if (ma === 45 || ma === 48) return "🌫️";
+  if (ma >= 51 && ma <= 57) return "🌦️"; if ((ma >= 61 && ma <= 67) || (ma >= 80 && ma <= 82)) return "🌧️";
+  if (ma >= 95) return "⛈️"; return "·";
+}
+function nhan(n, d) { return n == null ? "--" : Math.round(n) + d; }
+function chuThoiGian(phut) {
+  if (phut >= 1440) { const d = Math.floor(phut / 1440), g = Math.floor((phut % 1440) / 60); return d + " ngày" + (g ? " " + g + " giờ" : ""); }
+  if (phut >= 60) { const g = Math.floor(phut / 60), m = phut % 60; return g + " giờ" + (m ? " " + m + " phút" : ""); }
+  return phut + " phút";
+}
+function veThoiTiet() {
+  const w = tw, ban = $("cardTt");
+  ban.hidden = !(cfg && cfg.topic);
+  $("wGio").textContent = ""; $("wNgay").textContent = "";
+  const cb = $("wCanhBao");
+  if (!w || !w.co) {
+    $("wIco").textContent = "·"; $("wNhiet").textContent = "--";
+    $("wMoTa").textContent = w ? "Thời tiết đang tắt hoặc chưa tải được trên PC" : "Đang chờ dữ liệu thời tiết từ PC...";
+    $("wPhu").textContent = ""; $("wCapNhat").textContent = ""; cb.hidden = true; return;
+  }
+  const bay = Date.now() / 1000;
+  const tuoi = bay - (w.tinh_luc || w.tai_luc || 0);
+  const cu = w.cu || tuoi > 1800 || pcOnline === false;            // PC ngừng cập nhật thì không tin cảnh báo cũ
+  $("wIco").textContent = bieuTuong(w.ma);
+  $("wNhiet").textContent = nhan(w.nhiet, "°C");
+  $("wMoTa").textContent = w.mo_ta || "";
+  $("wPhu").textContent = w.am != null ? "Độ ẩm " + Math.round(w.am) + "%" + (w.xs_3h != null ? " · mưa 3 giờ tới tối đa " + Math.round(w.xs_3h) + "%" : "") : "";
+  const t = dpt(w.tai_luc, w.utc);
+  $("wCapNhat").textContent = "cập nhật " + two(t.getUTCHours()) + ":" + two(t.getUTCMinutes());
+  if (cu) {
+    cb.hidden = false; cb.className = "wwarn cu";
+    cb.textContent = pcOnline === false ? "PC đang tắt, dữ liệu thời tiết và cảnh báo mưa có thể đã cũ." : "Dữ liệu thời tiết đã cũ, chưa kiểm tra được mưa.";
+  } else if (w.mua && w.canh_bao) {
+    cb.hidden = false; cb.className = "wwarn"; cb.textContent = "☔ " + w.canh_bao;
+  } else cb.hidden = true;
+  for (const g of (w.gio || []).slice(0, 12)) {
+    const e = document.createElement("div"); e.className = "hh";
+    const a = document.createElement("div"); a.textContent = two(dpt(g[0], w.utc).getUTCHours()) + "h";
+    const b = document.createElement("b"); b.textContent = bieuTuong(g[3]) + " " + nhan(g[1], "°");
+    const p = document.createElement("div"); p.className = "p"; p.textContent = g[2] != null ? g[2] + "%" : "";
+    e.append(a, b, p); $("wGio").append(e);
+  }
+  const TH = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+  for (const n of (w.ngay || []).slice(0, 3)) {
+    const d = dpt(n[0], w.utc), r = document.createElement("div"); r.className = "dd";
+    const l = document.createElement("span"); l.textContent = bieuTuong(n[4]) + " " + TH[d.getUTCDay()] + " " + two(d.getUTCDate()) + "/" + two(d.getUTCMonth() + 1);
+    const v = document.createElement("span");
+    v.textContent = (n[1] != null && n[2] != null ? Math.round(n[1]) + "-" + Math.round(n[2]) + "°C" : "") + (n[3] != null ? " · mưa " + n[3] + "%" : "");
+    r.append(l, v); $("wNgay").append(r);
+  }
+}
+
+/* ---------- hoãn tưới / vắng nhà / đánh dấu ---------- */
+function conPhut(k) {                                              // phút còn lại, trừ thời gian đã trôi từ lúc nhận (không phụ thuộc đồng hồ PC)
+  if (!tt || !tt[k]) return 0;
+  return Math.max(0, Math.ceil(tt[k] - (Date.now() - ttNhan) / 60000));
+}
+function veLich(pcOk, dung) {
+  const moiPc = tt && tt.hoan_phut !== undefined;                   // app PC bản cũ không có các trường này
+  const cu = tt && tt.phien_ban != null && tt.phien_ban < 4;       // sketch da3 không có lệnh HOAN
+  const h = conPhut("hoan_phut"), v = conPhut("vang_nha_phut");
+  const sh = $("stHoan"), sv = $("stVang");
+  sh.textContent = ""; sv.textContent = "";
+  const b1 = document.createElement("b");
+  if (!tt || !moiPc) { sh.append("Hoãn tưới: " + (tt ? "cần cập nhật app PC" : "--")); }
+  else if (cu) { sh.append("Hoãn tưới: Arduino đang chạy sketch cũ, hãy nạp tuoi_sen_da4"); }
+  else if (h > 0) { b1.textContent = "còn " + chuThoiGian(h); sh.append("Hoãn tưới: ", b1); }
+  else sh.append("Hoãn tưới: không hoãn");
+  const b2 = document.createElement("b");
+  if (!tt || !moiPc) sv.append("Vắng nhà: " + (tt ? "cần cập nhật app PC" : "--"));
+  else if (v > 0) { b2.textContent = "còn " + chuThoiGian(v); sv.append("Vắng nhà: ", b2); }
+  else sv.append("Vắng nhà: không");
+  const duocHoan = dung && moiPc && !cu, duocPc = pcOk && moiPc;
+  document.querySelectorAll("#optHoan .pill").forEach((b) => { b.disabled = !duocHoan || (b.dataset.p === "0" && h === 0); });
+  document.querySelectorAll("#optVang .pill").forEach((b) => { b.disabled = !duocPc || (b.dataset.g === "0" && v === 0); });
+  $("btnMark").disabled = !duocPc;
+}
+
+/* ---------- huy hiệu điều phối (M4): hoãn, yên tĩnh, vắng nhà ---------- */
+function veHuyHieu() {
+  const box = $("cheDo"), dp = tt && tt.dp;                         // app PC bản cũ không gửi trường dp
+  box.textContent = "";
+  if (!dp) { box.style.display = "none"; return; }
+  const them = (loai, chu) => {
+    const e = document.createElement("div"); e.className = "chip " + loai;
+    const i = document.createElement("i"), s = document.createElement("span"); s.textContent = chu;
+    e.append(i, s); box.append(e);
+  };
+  const h = conPhut("hoan_phut"), v = conPhut("vang_nha_phut");
+  const [tu, den] = String(dp.khung || "-").split("-"), [yTu, yDen] = String(dp.yen || "-").split("-");
+  if (v > 0) them("info", "Vắng nhà · còn " + chuThoiGian(v));
+  if (h > 0) {
+    if (dp.hoan_app && dp.ngoai_khung && tu) them("warn", "Hoãn tưới · tưới lại từ " + tu);
+    else them("warn", "Hoãn tưới · còn " + chuThoiGian(h));
+  } else if (dp.khung_bat && dp.ngoai_khung && tu) them("warn", "Ngoài giờ tưới · tưới từ " + tu);
+  else if (dp.khung_bat && den) them("ok", "Giờ tưới · tới " + den);
+  if (dp.yen_tinh && v === 0 && yDen) them("info", "Yên tĩnh · tới " + yDen);
+  box.style.display = box.children.length ? "flex" : "none";
+}
+
+function capNhat() {
+  const tuoi = tt ? (Date.now() - ttNhan) / 1000 : 1e9;      // giây kể từ lần nhận trạng thái gần nhất
+  const song = tt && tt.arduino && (Date.now() / 1000 - tt.ts) < 45;  // đồng hồ PC và điện thoại có thể lệch nhẹ nên dùng ts của PC
+  const tuoiPc = tt ? Math.abs(Date.now() / 1000 - tt.ts) : 1e9;
+
+  if (!cfg || !cfg.topic) chip("cCloud", "", "Chưa cài đặt");
+  else chip("cCloud", daKetNoi ? "ok" : "warn", daKetNoi ? "Máy chủ" : "Đang kết nối...");
+  chip("cPc", pcOnline === true ? "ok" : (pcOnline === false ? "err" : ""), pcOnline === true ? "PC" : (pcOnline === false ? "PC tắt" : "PC ?"));
+  chip("cArd", song ? "ok" : (tt && tt.arduino ? "warn" : "err"), song ? "Arduino" : (tt && tt.arduino ? "Mất tín hiệu" : "Arduino chưa nối"));
+
+  const b = $("banner"); let tieu, mota, lop = "";
+  if (!cfg || !cfg.topic) { tieu = "Chưa kết nối"; mota = "Bấm ⚙ để nhập thông tin máy chủ MQTT."; lop = "off"; }
+  else if (!daKetNoi) { tieu = "Đang kết nối máy chủ..."; mota = "Kiểm tra mạng nếu chờ quá lâu."; lop = "off"; }
+  else if (pcOnline === false) { tieu = "PC đang tắt"; mota = "Mở app Tưới cây trên PC để xem số liệu và điều khiển."; lop = "off"; }
+  else if (!tt) { tieu = "Đang chờ số liệu"; mota = "Chưa nhận được dữ liệu từ PC."; lop = "off"; }
+  else if (!tt.arduino) { tieu = "Arduino chưa nối"; mota = "Trên PC bấm Bắt đầu (F5) để ghi dữ liệu."; lop = "off"; }
+  else if (!song) { tieu = "Mất tín hiệu"; mota = "Lần cập nhật cuối " + Math.round(tuoiPc) + " giây trước."; lop = "err"; }
+  else if (tt.khoa_bom) { tieu = "Bơm đang bị khóa"; mota = "2 phiên tưới liên tiếp mà đất không ẩm lên. Kiểm tra nước, ống, bơm, cảm biến rồi bấm “Mở khóa bơm”."; lop = "err"; }
+  else if (tt.canh_bao) { tieu = "Cần chú ý"; mota = tt.canh_bao; lop = "err"; }
+  else if (tt.bom) { tieu = "Đang tưới"; mota = "Bơm đang chạy, tự dừng khi đất đủ ẩm."; lop = "busy"; }
+  else {
+    tieu = "Đang theo dõi"; mota = tt.tu_dong === false ? "Tự động tưới đang tạm dừng (đã bấm Dừng)." : "Mọi thứ ổn. Số liệu cập nhật trực tiếp.";
+    const hp = conPhut("hoan_phut"), vp = conPhut("vang_nha_phut");
+    if (hp > 0) mota += " Đang hoãn tưới, còn " + chuThoiGian(hp) + ".";
+    if (vp > 0) mota += " Chế độ vắng nhà, còn " + chuThoiGian(vp) + ".";
+  }
+  b.className = "banner " + lop; $("bTieu").textContent = tieu; $("bMota").textContent = mota;
+
+  const co = tt && tt.arduino && tt.dat != null;
+  $("vDat").textContent = co ? Math.round(tt.dat) + "%" : "--";
+  $("vNhiet").textContent = co ? tt.nhiet.toFixed(1) + "°C" : "--";
+  $("vKk").textContent = co ? Math.round(tt.kk) + "%" : "--";
+  $("bDat").style.width = co ? Math.max(0, Math.min(100, tt.dat)) + "%" : "0";
+  $("bNhiet").style.width = co ? Math.max(0, Math.min(100, tt.nhiet * 2)) + "%" : "0";
+  $("bKk").style.width = co ? Math.max(0, Math.min(100, tt.kk)) + "%" : "0";
+  const u = $("uNguong");
+  if (co && tt.nguong > 0) { u.style.display = "block"; u.style.left = tt.nguong + "%"; } else u.style.display = "none";
+  $("bomTxt").textContent = co ? (tt.bom ? "ĐANG CHẠY" : (tt.khoa_bom ? "BỊ KHÓA" : "Đang tắt")) : "--";
+  $("bomTxt").style.color = co && tt.bom ? "var(--bom)" : (co && tt.khoa_bom ? "var(--warn)" : "var(--muted)");
+
+  const dung = daKetNoi && pcOnline !== false && song;
+  $("btnBom").disabled = !dung || Date.now() < khoaBom || (tt && (tt.bom || tt.khoa_bom));
+  const biKhoa = !!(tt && tt.khoa_bom);
+  $("btnMoKhoa").classList.toggle("show", biKhoa);
+  $("btnMoKhoa").disabled = !dung || !biKhoa;
+  $("btnStop").disabled = !dung;
+  $("btnAuto").disabled = !dung || (tt && tt.tu_dong === true);
+  $("btnAuto").textContent = tt && tt.tu_dong === false ? "Bật lại tự động" : "Tự động tưới đang bật";
+  veLich(daKetNoi && pcOnline !== false && !!tt, dung);
+  veHuyHieu();
+  veThoiTiet();
+  veBieuDo();
+}
+
+/* ---------- biểu đồ ---------- */
+function veBieuDo() {
+  const now = lichSu.length ? lichSu[lichSu.length - 1][0] : Math.floor(Date.now() / 1000);
+  const ds = lichSu.filter((p) => p[0] >= now - cuaSo * 60);
+  ve($("c1"), ds, [[1, "#34d399"]], 100);
+  ve($("c2"), ds, [[2, "#fb7185"], [3, "#38bdf8"]], 100);
+}
+function ve(cv, ds, duong, ymax) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (!w || !h) return;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const g = cv.getContext("2d"); g.scale(dpr, dpr); g.clearRect(0, 0, w, h);
+  const L = 26, R = 4, T = 6, B = 16, pw = w - L - R, ph = h - T - B;
+  g.font = "10px sans-serif"; g.fillStyle = "#8b94a3"; g.strokeStyle = "#2a303c"; g.lineWidth = 1;
+  for (let k = 0; k <= 4; k++) {
+    const y = T + ph * k / 4; g.beginPath(); g.moveTo(L, y); g.lineTo(w - R, y); g.stroke();
+    g.fillText(String(Math.round(ymax * (1 - k / 4))), 0, y + 3);
+  }
+  if (ds.length < 2) { g.fillText("Đang chờ thêm số liệu...", L + 8, T + ph / 2); return; }
+  const t0 = ds[0][0], t1 = ds[ds.length - 1][0], dt = Math.max(1, t1 - t0);
+  const X = (t) => L + pw * (t - t0) / dt, Y = (v) => T + ph * (1 - Math.max(0, Math.min(ymax, v)) / ymax);
+  g.fillStyle = "rgba(167,139,250,.22)";            // nền tím khi bơm chạy
+  let a = null;
+  for (let i = 0; i < ds.length; i++) {
+    if (ds[i][4] && a === null) a = ds[i][0];
+    if ((!ds[i][4] || i === ds.length - 1) && a !== null) { g.fillRect(X(a), T, Math.max(2, X(ds[i][0]) - X(a)), ph); a = null; }
+  }
+  for (const [ix, mau] of duong) {
+    g.strokeStyle = mau; g.lineWidth = 2; g.lineJoin = "round"; g.beginPath();
+    ds.forEach((p, i) => i ? g.lineTo(X(p[0]), Y(p[ix])) : g.moveTo(X(p[0]), Y(p[ix])));
+    g.stroke();
+  }
+  g.fillStyle = "#8b94a3"; g.fillText(hhmmss(t0).slice(0, 5), L, h - 3);
+  const s = hhmmss(t1).slice(0, 5); g.fillText(s, w - R - g.measureText(s).width, h - 3);
+}
+
+/* ---------- sự kiện giao diện ---------- */
+$("btnBom").onclick = () => {
+  if (!confirm("Tưới ngay một phiên (tối đa 30 mL)?")) return;
+  khoaBom = Date.now() + 60000; setTimeout(capNhat, 60500); guiLenh("BOM"); capNhat();
+};
+$("btnStop").onclick = () => guiLenh("STOP");           // dừng thì không cần hỏi lại
+$("btnAuto").onclick = () => guiLenh("AUTO");
+$("btnMoKhoa").onclick = () => {
+  if (!confirm("Bơm bị khóa vì 2 phiên tưới liên tiếp mà đất không ẩm lên.\n\nĐã kiểm tra nước trong bình, ống nước, bơm và cảm biến đất chưa? Mở khóa bơm bây giờ?")) return;
+  guiLenh("MOKHOA");
+};
+$("optHoan").onclick = (e) => {
+  const p = e.target.dataset && e.target.dataset.p; if (p == null || e.target.disabled) return;
+  const phut = +p;
+  if (phut > 0 && !confirm("Hoãn các phiên tưới tự động trong " + chuThoiGian(phut) + "?\nĐất dưới 5% vẫn được tưới.")) return;
+  guiLenh("HOAN", { phut });
+};
+$("optVang").onclick = (e) => {
+  const g = e.target.dataset && e.target.dataset.g; if (g == null || e.target.disabled) return;
+  guiLenh("VANGNHA", { gio: +g });
+};
+$("btnMark").onclick = () => {
+  const ghi = prompt("Ghi chú cho dấu đánh dấu (có thể để trống):", "");
+  if (ghi === null) return;                                         // bấm Hủy thì không đánh dấu
+  guiLenh("DANHDAU", { ghi_chu: ghi.trim().slice(0, 60) });
+};
+$("seg").onclick = (e) => {
+  const m = e.target.dataset && e.target.dataset.m; if (!m) return;
+  cuaSo = +m; [...$("seg").children].forEach((b) => b.classList.toggle("on", b === e.target)); veBieuDo();
+};
+$("btnCai").onclick = () => {
+  $("iHost").value = cfg.host; $("iPort").value = cfg.port; $("iPath").value = cfg.path;
+  $("iUser").value = cfg.user; $("iPass").value = cfg.pass; $("iTopic").value = cfg.topic;
+  $("dlg").showModal();
+};
+$("dHuy").onclick = () => $("dlg").close();
+$("dLuu").onclick = () => {
+  const c = { host: $("iHost").value.trim(), port: $("iPort").value.trim() || "8884", path: $("iPath").value.trim() || "/mqtt",
+              user: $("iUser").value.trim(), pass: $("iPass").value, topic: $("iTopic").value.trim().replace(/^\/+|\/+$/g, "") };
+  if (!c.host || !c.topic) { toast("Cần nhập máy chủ và chủ đề", "bad"); return; }
+  if (!/^\d+$/.test(c.port)) { toast("Cổng phải là số", "bad"); return; }
+  cfg = c; ghiCfg(c); lichSu = []; $("dlg").close(); ketNoi();
+};
+window.addEventListener("resize", veBieuDo);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) capNhat(); });
+
+/* ---------- khởi động ---------- */
+cfg = docHash() || docCfg();
+if (cfg.topic) ghiCfg(cfg);
+thuNgay(); setInterval(thuNgay, 1000);
+setInterval(capNhat, 3000);       // làm mới "mất tín hiệu", nút bấm, biểu đồ
+ketNoi();
+capNhat();
+if (!cfg.topic) setTimeout(() => $("btnCai").click(), 400);
+</script>
+</body>
+</html>
